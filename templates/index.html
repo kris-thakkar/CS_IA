@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Chess Game</title>
+  <!-- External Dependencies -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --arrow-color: #009688;
+      --light-square: #eeeed2;
+      --dark-square: #769656;
+      --white-piece-color: #ffffff;
+      --black-piece-color: #000000;
+    }
+    
+    body.dark-mode {
+      --light-square: #b8b8b8;
+      --dark-square: #666666;
+      background-color: #343a40 !important;
+      color: #f8f9fa !important;
+    }
+    
+    /* Container for the entire board with coordinates */
+    #boardContainer {
+      position: relative;
+      margin: 20px auto;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    
+    .board {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+    }
+    
+    /* Coordinate cells styling */
+    .coord {
+      width: 12.5%;
+      text-align: center;
+      vertical-align: middle;
+      font-weight: bold;
+      padding: 5px 0;
+    }
+    
+    /* Board squares (playable cells) */
+    td.square {
+      position: relative;
+      padding: 0;
+    }
+    /* Pseudo-element to force a square shape */
+    td.square::before {
+      content: "";
+      display: block;
+      padding-top: 100%;
+    }
+    /* Center inner content (pieces) */
+    td.square > * {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    /* Increase the size of the pieces */
+    .piece {
+      font-size: 48px;
+    }
+    
+    /* Hover effect for board squares */
+    .board td:hover {
+      transform: scale(1.05);
+      z-index: 2;
+    }
+    
+    .dark { background-color: var(--dark-square); }
+    .light { background-color: var(--light-square); }
+    
+    #arrowOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    
+    .legal-dot {
+      width: 12px;
+      height: 12px;
+      background-color: rgba(0,0,0,0.5);
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    
+    /* Sidebar cards customizations */
+    .card { margin-bottom: 20px; }
+    
+    .white-piece {
+      color: var(--white-piece-color);
+      text-shadow: 1px 1px 2px #000;
+    }
+    
+    .black-piece {
+      color: var(--black-piece-color);
+      text-shadow: 1px 1px 2px #fff;
+    }
+    
+    #moveTable {
+      table-layout: fixed;
+      width: 100%;
+    }
+    
+    #moveTable th, #moveTable td {
+      padding: 0.3rem;
+      word-break: break-word;
+    }
+    
+    .game-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    
+    .game-controls button {
+      flex: 0 0 auto;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container my-4">
+    <h1 class="text-center mb-4">Interactive Chess Game</h1>
+    <div class="text-center mb-3">
+      <button class="btn btn-secondary" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+    </div>
+    <div class="row">
+      <!-- Left Column: Chess Board -->
+      <div class="col-lg-6">
+        <div class="mb-3 text-center">
+          <div id="engineToggleContainer">
+            <label class="form-check-label">
+              <input type="checkbox" id="engineToggle" class="form-check-input" onchange="toggleEngineMode(this.checked)">
+              Engine Analysis Activate
+            </label>
+          </div>
+          <h3>Opening: <span id="openingName">None</span></h3>
+        </div>
+        <div id="boardContainer">
+          <table class="board">
+            <!-- Top file coordinates -->
+            <tr>
+              <td class="coord"></td>
+              {% for file in "abcdefgh" %}
+                <td class="coord">{{ file }}</td>
+              {% endfor %}
+              <td class="coord"></td>
+            </tr>
+            {% set files = ['a','b','c','d','e','f','g','h'] %}
+            {% for r in range(8) %}
+              {% set rank = 8 - r %}
+              <tr>
+                <td class="coord">{{ rank }}</td>
+                {% for j in range(8) %}
+                  {% set file = files[j] %}
+                  {% set square = file + rank|string %}
+                  {% set is_dark = ((r + j) % 2 == 0) %}
+                  <td id="{{ square }}" class="square {% if is_dark %}dark{% else %}light{% endif %}"></td>
+                {% endfor %}
+                <td class="coord">{{ rank }}</td>
+              </tr>
+            {% endfor %}
+            <!-- Bottom file coordinates -->
+            <tr>
+              <td class="coord"></td>
+              {% for file in "abcdefgh" %}
+                <td class="coord">{{ file }}</td>
+              {% endfor %}
+              <td class="coord"></td>
+            </tr>
+          </table>
+          <svg id="arrowOverlay">
+            <defs>
+              <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="3" refY="2" orient="auto">
+                <polygon points="0 0, 6 2, 0 4" fill="var(--arrow-color)"></polygon>
+              </marker>
+            </defs>
+          </svg>
+        </div>
+        <div class="text-center mt-3 game-controls">
+          <button class="btn btn-primary" onclick="resetGame()">Reset Game</button>
+          <button class="btn btn-primary" onclick="undoMove()">Undo Move</button>
+          <button class="btn btn-primary" onclick="redoMove()">Redo Move</button>
+        </div>
+      </div>
+      <!-- Right Column: Sidebar -->
+      <div class="col-lg-6 mt-4 mt-lg-0">
+        <div class="card">
+          <div class="card-header">Move List</div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm" id="moveTable">
+                <thead>
+                  <tr>
+                    <th>White</th>
+                    <th>Black</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Game Statistics</div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-sm-6">
+                <p id="movesMade">Moves Made: 0</p>
+                <p id="whiteCaptured">White Captured: 0</p>
+                <p id="blackCaptured">Black Captured: 0</p>
+              </div>
+              <div class="col-sm-6">
+                <p id="whiteMaterial">White Material: 0</p>
+                <p id="blackMaterial">Black Material: 0</p>
+                <p id="materialDiff">Material Difference: 0</p>
+              </div>
+            </div>
+            <p id="engineEval">Engine Eval: N/A</p>
+            <p id="gameOutcome" class="text-center fw-bold"></p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Live Win Probability</div>
+          <div class="card-body">
+            <canvas id="liveEvalChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript: Interactive functions including promotion logic -->
+  <script>
+    var initialBoardState = {{ board|tojson }};
+    let selectedSquare = null;
+    let legalMoves = [];
+    let draggedFrom = null;
+    let engineMode = false;
+    let liveEvalChart = null;
+    let evalHistory = [];
+
+    function showError(message) {
+      Swal.fire({ icon: 'error', title: 'Oops...', text: message });
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('liveEvalChart').getContext('2d');
+      liveEvalChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Win Probability (%)',
+            data: [],
+            fill: false,
+            borderColor: 'blue',
+            tension: 0.1
+          }]
+        },
+        options: { 
+          scales: { y: { beginAtZero: true, max: 100 } },
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    }
+
+    function updateLiveChart() {
+      if (liveEvalChart && evalHistory.length > 0) {
+        liveEvalChart.data.labels = evalHistory.map(item => 'Move ' + item.move);
+        liveEvalChart.data.datasets[0].data = evalHistory.map(item => item.winProb);
+        liveEvalChart.update();
+      }
+    }
+
+    function attachCellEvents() {
+      document.querySelectorAll('.square').forEach(cell => {
+        cell.onclick = () => handleCellClick(cell.id);
+        cell.ondragover = event => event.preventDefault();
+        cell.ondrop = event => {
+          event.preventDefault();
+          removeLegalMoveDots();
+          const fromSquare = event.dataTransfer.getData("text/plain");
+          const toSquare = cell.id;
+          if (fromSquare && toSquare) {
+            makeMove(fromSquare + toSquare);
+          }
+        };
+      });
+    }
+
+    function attachDragHandlers() {
+      document.querySelectorAll('.piece').forEach(piece => {
+        piece.ondragstart = function(event) {
+          draggedFrom = this.parentElement.id;
+          event.dataTransfer.setData("text/plain", draggedFrom);
+          fetchLegalMoves(draggedFrom, true);
+        };
+        piece.ondragend = () => removeLegalMoveDots();
+      });
+    }
+
+    function handleCellClick(square) {
+      if (selectedSquare && legalMoves.includes(square)) {
+        removeLegalMoveDots();
+        makeMove(selectedSquare + square);
+        selectedSquare = null;
+        legalMoves = [];
+        return;
+      }
+      removeLegalMoveDots();
+      selectedSquare = square;
+      fetchLegalMoves(square, false);
+    }
+
+    function fetchLegalMoves(square, isDrag) {
+      fetch('/get_legal_moves', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ square: square })
+      })
+      .then(response => response.json())
+      .then(data => {
+        legalMoves = data.legal_moves;
+        showLegalMoveDots(legalMoves);
+      })
+      .catch(err => showError("Failed to fetch legal moves"));
+    }
+
+    function showLegalMoveDots(moves) {
+      moves.forEach(dest => {
+        const cell = document.getElementById(dest);
+        if (cell) {
+          let dot = document.createElement('span');
+          dot.className = 'legal-dot';
+          cell.appendChild(dot);
+        }
+      });
+    }
+
+    function removeLegalMoveDots() {
+      document.querySelectorAll('.legal-dot').forEach(dot => dot.remove());
+    }
+
+    // Updated makeMove accepts an optional promotion parameter.
+    function makeMove(move, promotion = null) {
+      let payload = { move: move };
+      if (promotion !== null) {
+        payload.promotion = promotion;
+      }
+      fetch('/make_move', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          updateBoard(data.board);
+          updateMoves(data.moves);
+          updateOpening(data.opening);
+          updateStats(data.stats, data.game_results);
+          if (engineMode) { getBestMoves(); }
+          else { clearArrows(); document.getElementById("engineEval").textContent = "Engine Eval: N/A"; }
+          document.getElementById("gameOutcome").textContent = data.game_over ? data.outcome : "";
+        } else {
+          // If promotion is required, prompt the user for a choice.
+          if (data.error === "Promotion piece required") {
+            promptPromotion(move);
+          } else {
+            showError(data.error);
+          }
+        }
+      })
+      .catch(err => showError("Move failed"));
+    }
+
+    // Prompts the user with four promotion options using SweetAlert2.
+    function promptPromotion(move) {
+      Swal.fire({
+        title: 'Pawn Promotion',
+        html: `<button id="promoteQueen" class="swal2-confirm swal2-styled" style="margin: 5px;">Queen</button>
+               <button id="promoteRook" class="swal2-confirm swal2-styled" style="margin: 5px;">Rook</button>
+               <button id="promoteBishop" class="swal2-confirm swal2-styled" style="margin: 5px;">Bishop</button>
+               <button id="promoteKnight" class="swal2-confirm swal2-styled" style="margin: 5px;">Knight</button>`,
+        showConfirmButton: false,
+        allowOutsideClick: false
+      });
+      document.getElementById('promoteQueen').onclick = function() {
+        sendPromotion(move, 'q');
+      };
+      document.getElementById('promoteRook').onclick = function() {
+        sendPromotion(move, 'r');
+      };
+      document.getElementById('promoteBishop').onclick = function() {
+        sendPromotion(move, 'b');
+      };
+      document.getElementById('promoteKnight').onclick = function() {
+        sendPromotion(move, 'n');
+      };
+    }
+
+    // Closes the promotion modal and re-sends the move with the chosen promotion.
+    function sendPromotion(move, promotion) {
+      Swal.close();
+      makeMove(move, promotion);
+    }
+
+    function updateBoard(boardState) {
+      for (const square in boardState) {
+        const cell = document.getElementById(square);
+        if (cell) {
+          cell.innerHTML = "";
+          if (boardState[square] !== "") {
+            const symbol = boardState[square];
+            const isWhite = ['♙', '♘', '♗', '♖', '♕', '♔'].includes(symbol);
+            const pieceClass = isWhite ? 'white-piece' : 'black-piece';
+            const pieceSpan = document.createElement('span');
+            pieceSpan.className = `piece ${pieceClass}`;
+            pieceSpan.textContent = symbol;
+            pieceSpan.draggable = true;
+            cell.appendChild(pieceSpan);
+          }
+        }
+      }
+      attachDragHandlers();
+    }
+
+    function updateMoves(moves) {
+      const moveTableBody = document.querySelector('#moveTable tbody');
+      moveTableBody.innerHTML = "";
+      for (let i = 0; i < moves.length; i += 2) {
+        const whiteMove = moves[i];
+        const blackMove = moves[i + 1] ? moves[i + 1] : "";
+        const tr = document.createElement('tr');
+        const whiteCell = document.createElement('td');
+        const blackCell = document.createElement('td');
+        whiteCell.textContent = ((i / 2) + 1) + ". " + whiteMove;
+        blackCell.textContent = blackMove;
+        tr.appendChild(whiteCell);
+        tr.appendChild(blackCell);
+        moveTableBody.appendChild(tr);
+      }
+      if (moveTableBody.lastChild) {
+        moveTableBody.lastChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function updateOpening(opening) {
+      document.getElementById('openingName').textContent = opening ? opening : "None";
+    }
+
+    function updateStats(stats, gameResults) {
+      document.getElementById("movesMade").textContent = "Moves Made: " + stats.moves_made;
+      document.getElementById("whiteCaptured").textContent = "White Captured: " + stats.white_captured;
+      document.getElementById("blackCaptured").textContent = "Black Captured: " + stats.black_captured;
+      document.getElementById("whiteMaterial").textContent = "White Material: " + stats.white_material;
+      document.getElementById("blackMaterial").textContent = "Black Material: " + stats.black_material;
+      document.getElementById("materialDiff").textContent = "Material Difference: " + stats.material_diff;
+    }
+
+    function getBestMoves() {
+      fetch('/get_best_moves')
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          clearArrows();
+          document.getElementById("engineEval").textContent = "Engine Eval: N/A";
+          return;
+        }
+        if (data.best_moves && data.best_moves.length > 0) {
+          drawArrows(data.best_moves);
+          let evalText = "Engine Eval: ";
+          let score = data.best_moves[0].score;
+          evalText += (score === null) ? "Mate" : score;
+          document.getElementById("engineEval").textContent = evalText;
+          if (score !== null) {
+            let winProb = 1 / (1 + Math.exp(-score / 400)) * 100;
+            let moveNumber = document.querySelector('#moveTable tbody').rows.length;
+            evalHistory.push({move: moveNumber, winProb: winProb});
+            updateLiveChart();
+          }
+        } else {
+          clearArrows();
+          document.getElementById("engineEval").textContent = "Engine Eval: N/A";
+        }
+      })
+      .catch(err => {
+        clearArrows();
+        document.getElementById("engineEval").textContent = "Engine Eval: N/A";
+      });
+    }
+
+    function drawArrows(moves) {
+      clearArrows();
+      const svg = document.getElementById("arrowOverlay");
+      moves.forEach(move => {
+        const start = getCellCenter(move.from);
+        const end = getCellCenter(move.to);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", start.x);
+        line.setAttribute("y1", start.y);
+        line.setAttribute("x2", end.x);
+        line.setAttribute("y2", end.y);
+        line.setAttribute("stroke", "var(--arrow-color)");
+        line.setAttribute("stroke-width", "4");
+        line.setAttribute("marker-end", "url(#arrowhead)");
+        svg.appendChild(line);
+      });
+    }
+
+    function clearArrows() {
+      const svg = document.getElementById("arrowOverlay");
+      while (svg.firstChild) { svg.removeChild(svg.firstChild); }
+      const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+      defs.innerHTML = `<marker id="arrowhead" markerWidth="6" markerHeight="4" refX="3" refY="2" orient="auto">
+                          <polygon points="0 0, 6 2, 0 4" fill="var(--arrow-color)"></polygon>
+                        </marker>`;
+      svg.appendChild(defs);
+    }
+
+    function getCellCenter(squareId) {
+      const cell = document.getElementById(squareId);
+      const cellRect = cell.getBoundingClientRect();
+      const containerRect = document.getElementById("boardContainer").getBoundingClientRect();
+      return {
+        x: cellRect.left - containerRect.left + cellRect.width / 2,
+        y: cellRect.top - containerRect.top + cellRect.height / 2
+      };
+    }
+
+    function resetGame() {
+      fetch('/reset', { method: 'POST' })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          updateBoard(data.board);
+          updateMoves(data.moves);
+          updateOpening(data.opening);
+          updateStats(data.stats, data.game_results);
+          removeLegalMoveDots();
+          clearArrows();
+          selectedSquare = null;
+          legalMoves = [];
+          document.getElementById("engineEval").textContent = "Engine Eval: N/A";
+          document.getElementById("gameOutcome").textContent = "";
+          evalHistory = [];
+          if (liveEvalChart) {
+            liveEvalChart.data.labels = [];
+            liveEvalChart.data.datasets[0].data = [];
+            liveEvalChart.update();
+          }
+        }
+      })
+      .catch(err => showError("Failed to reset game"));
+    }
+
+    function undoMove() {
+      fetch('/undo', { method: 'POST' })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          updateBoard(data.board);
+          updateMoves(data.moves);
+          updateStats(data.stats);
+          if (engineMode) { getBestMoves(); }
+        } else {
+          showError(data.error);
+        }
+      })
+      .catch(err => showError("Undo move failed"));
+    }
+
+    function redoMove() {
+      fetch('/redo', { method: 'POST' })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          updateBoard(data.board);
+          updateMoves(data.moves);
+          updateStats(data.stats);
+          if (engineMode) { getBestMoves(); }
+        } else {
+          showError(data.error);
+        }
+      })
+      .catch(err => showError("Redo move failed"));
+    }
+
+    function toggleEngineMode(enabled) {
+      engineMode = enabled;
+      fetch('/toggle_engine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: enabled })
+      })
+      .then(response => response.json())
+      .then(() => {
+        if (engineMode) { getBestMoves(); }
+        else { clearArrows(); document.getElementById("engineEval").textContent = "Engine Eval: N/A"; }
+      })
+      .catch(err => showError("Failed to toggle engine mode"));
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+      if (liveEvalChart) {
+        if (document.body.classList.contains("dark-mode")) {
+          liveEvalChart.data.datasets[0].borderColor = "#4dabf5";
+          liveEvalChart.options.scales.y.grid = { color: "rgba(255, 255, 255, 0.1)" };
+          liveEvalChart.options.scales.x.grid = { color: "rgba(255, 255, 255, 0.1)" };
+        } else {
+          liveEvalChart.data.datasets[0].borderColor = "blue";
+          liveEvalChart.options.scales.y.grid = { color: "rgba(0, 0, 0, 0.1)" };
+          liveEvalChart.options.scales.x.grid = { color: "rgba(0, 0, 0, 0.1)" };
+        }
+        liveEvalChart.update();
+      }
+    }
+    
+    function resizeChart() {
+      if (liveEvalChart) {
+        liveEvalChart.resize();
+      }
+    }
+
+    window.addEventListener('resize', resizeChart);
+
+    window.onload = function() {
+      updateBoard(initialBoardState);
+      attachCellEvents();
+      initChart();
+      if (engineMode) { getBestMoves(); }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
