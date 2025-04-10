@@ -1,0 +1,94 @@
+# King's Pawn Openings
+e4: King's Pawn Game
+e4 e5: Open Game
+e4 e5 Nf3: King's Knight Opening
+e4 e5 Nf3 Nc6: Double King's Pawn Game
+e4 e5 Nf3 Nc6 Bb5: Ruy Lopez
+e4 e5 Nf3 Nc6 Bc4: Italian Game
+e4 e5 Nf3 Nc6 d4: Scotch Game
+e4 e5 Nf3 Nc6 Bb4: Berlin Defense
+e4 e5 Nf3 d6: Philidor Defense
+e4 e5 f4: King's Gambit
+
+# King's Gambit and Variations
+e4 e5 f4: King's Gambit
+e4 e5 f4 exf4: King's Gambit Accepted
+e4 e5 f4 d5: King's Gambit Declined
+e4 e5 f4 Nf6: Falkbeer Countergambit
+
+# Sicilian Defense Variations
+e4 c5: Sicilian Defense
+e4 c5 Nf3: Sicilian, Open Variation
+e4 c5 Nf3 d6: Sicilian, Najdorf Variation
+e4 c5 Nf3 Nc6: Sicilian, Classical Variation
+e4 c5 Nf3 e6: Sicilian, Scheveningen Variation
+e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3: Sicilian, Dragon Variation
+e4 c5 Nf3 d6 d4 cxd4 Nxd4: Sicilian, Sveshnikov Variation
+e4 c5 Nf3 d6 d4 cxd4 Nxd4 a6: Sicilian, Paulsen Variation
+
+# French Defense Variations
+e4 e6: French Defense
+e4 e6 d4: French Defense, Classical Variation
+e4 e6 d4 d5: French Defense, Tarrasch Variation
+e4 e6 d4 d5 Nc3: French Defense, Advance Variation
+e4 e6 d4 d5 Nd2: French Defense, Tarrasch Variation
+e4 e6 d4 d5 exd5: French Defense, Exchange Variation
+
+# Caro-Kann Defense Variations
+e4 c6: Caro-Kann Defense
+e4 c6 d4 d5: Caro-Kann, Advance Variation
+e4 c6 d4 d5 Nc3: Caro-Kann, Classical Variation
+e4 c6 d4 d5 exd5 cxd5: Caro-Kann, Exchange Variation
+
+# Pirc and Modern Defense
+e4 d6: Pirc Defense
+e4 d6 d4 Nf6 Nc3 g6: Pirc, Classical Variation
+e4 g6: Modern Defense
+e4 g6 d4 Bg7 Nc3 d6: Modern, Averbakh Variation
+
+# Alekhine's Defense
+e4 Nf6: Alekhine's Defense
+e4 Nf6 Nc3: Alekhine, Modern Variation
+e4 Nf6 d4: Alekhine, Four Pawns Attack
+e4 Nf6 d4 d5: Alekhine, Exchange Variation
+
+# Queen's Pawn Openings
+d4: Queen's Pawn Game
+d4 d5: Closed Game
+d4 d5 c4: Queen's Gambit
+d4 d5 c4 e6: Queen's Gambit Declined
+d4 d5 c4 dxc4: Queen's Gambit Accepted
+d4 Nf6 c4: Indian Game
+d4 Nf6 c4 g6 Nc3 d5: Grünfeld Defense
+d4 Nf6 c4 e6 Nc3 Bb4: Nimzo-Indian Defense
+d4 Nf6 c4 g6 Nc3 Bg7: King's Indian Defense
+d4 Nf6 c4 g6 Nc3 d5: Grünfeld Defense
+d4 d5 Nc3 Nf6: Colle System
+d4 d5 Nf3 Nf6: London System
+
+# Indian Defenses and Related Variations
+d4 Nf6 c4 e6 Nc3 Bb4: Nimzo-Indian Defense
+d4 Nf6 c4 g6 Nc3 Bg7 e4: King's Indian Defense, Samisch Variation
+d4 Nf6 c4 g6 Nc3 d5: Grünfeld Defense
+d4 Nf6 Nf3 g6 c4 Bg7: King's Indian Attack
+
+# English and Other Openings
+c4: English Opening
+c4 e5: Reverse Sicilian
+c4 c5: Symmetrical English
+e4 d5: Scandinavian Defense
+d4 f5: Dutch Defense
+Nf3: Zukertort Opening
+g3: King's Fianchetto Opening
+b3: Larsen's Opening
+f4: Bird's Opening
+d3: Mieses Opening
+
+# Rare and Unorthodox Openings
+b4: Polish (Orangutan) Opening
+a3: Anderssen's Opening
+h3: Clemenz Opening
+g4: Grob's Attack
+e3: Van 't Kruijs Opening
+d4 Nf6 Bg5: Trompowsky Attack
+e4 c6 d4 d5 Nc3 dxe4: Alekhine–Chatard Attack
